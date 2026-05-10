@@ -1,0 +1,13 @@
+{
+  "name": "local-articles-api",
+  "version": "1.0.0",
+  "description": "API local de ejemplo para ser gestionada desde Anypoint Platform.",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
