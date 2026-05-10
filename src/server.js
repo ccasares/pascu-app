@@ -1,8 +1,8 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
 
-const HOST = process.env.HOST || "127.0.0.1";
-const PORT = Number(process.env.PORT || 8081);
+const HOST = process.env.HOST || "0.0.0.0";
+const PORT = Number(process.env.PORT) || 8081;
 
 const articles = [
   {
@@ -22,7 +22,6 @@ const openApi = {
     description: "API local de ejemplo para ser gestionada desde Anypoint Platform.",
     version: "1.0.0",
   },
-  servers: [{ url: `http://localhost:${PORT}` }],
   paths: {
     "/health": {
       get: {
@@ -199,7 +198,16 @@ const server = http.createServer(async (request, response) => {
     }
 
     if (request.method === "GET" && url.pathname === "/openapi.json") {
-      return sendJson(response, 200, openApi);
+      const forwardedProto = request.headers["x-forwarded-proto"];
+      const proto =
+        typeof forwardedProto === "string"
+          ? forwardedProto.split(",")[0]?.trim() || "http"
+          : "http";
+      const host = request.headers.host || `localhost:${PORT}`;
+      return sendJson(response, 200, {
+        ...openApi,
+        servers: [{ url: `${proto}://${host}` }],
+      });
     }
 
     if (request.method === "GET" && url.pathname === "/api/v1/articles") {
@@ -249,7 +257,8 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Local Articles API listening on http://localhost:${PORT}`);
+  const where = HOST === "0.0.0.0" ? `port ${PORT}` : `${HOST}:${PORT}`;
+  console.log(`Local Articles API listening on ${where}`);
 });
 
 function sendJson(response, status, payload) {
